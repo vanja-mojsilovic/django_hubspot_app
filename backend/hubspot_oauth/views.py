@@ -63,28 +63,47 @@ def get_companies(request):
 
     headers = {"Authorization": f"Bearer {access_token}"}
     url = "https://api.hubapi.com/crm/v3/objects/companies"
+    params = {
+        "limit": 100  # Max per page
+    }
 
-    response = requests.get(url, headers=headers)
-    if response.status_code != 200:
-        return JsonResponse({"error": response.text}, status=500)
+    all_companies = []
+    after = None
 
-    companies = response.json()
-    formatted = []
+    while len(all_companies) < 1000:
+        if after:
+            params["after"] = after
+        else:
+            params.pop("after", None)  # Clean up if not set
 
-    for company in companies.get("results", []):
-        props = company.get("properties", {})
-        formatted.append({
-            "name": props.get("name", ""),
-            "domain": props.get("domain", ""),
-            "hs_object_id": company.get("id", "")
-        })
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code != 200:
+            return JsonResponse({"error": response.text}, status=500)
+
+        data = response.json()
+        for company in data.get("results", []):
+            props = company.get("properties", {})
+            all_companies.append({
+                "name": props.get("name", ""),
+                "domain": props.get("domain", ""),
+                "hs_object_id": company.get("id", "")
+            })
+
+            if len(all_companies) >= 1000:
+                break  # Stop early if we've hit the target
+
+        paging = data.get("paging", {}).get("next", {})
+        after = paging.get("after")
+        if not after:
+            break  # No more pages
 
     try:
-        update_sheet(formatted)
+        update_sheet(all_companies)
     except Exception as e:
         return JsonResponse({"error": f"Sheet update failed: {str(e)}"}, status=500)
 
-    return JsonResponse(formatted, safe=False)
+    return JsonResponse(all_companies, safe=False)
+
 
 def oauth_backend_redirect(request):
     refresh_token = config("HUBSPOT_REFRESH_TOKEN")
