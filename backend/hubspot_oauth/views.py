@@ -127,3 +127,42 @@ def oauth_backend_redirect(request):
     print("Loaded refresh token:", repr(config("HUBSPOT_REFRESH_TOKEN")))
     return redirect(f"/oauth/companies/?access_token={access_token}")
 
+# hubspot_oauth/views.py
+
+def fetch_companies(access_token, max_records=1000, page_size=100):
+    url = "https://api.hubapi.com/crm/v3/objects/companies"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    params = {"limit": page_size}
+
+    all_companies = []
+    after = None
+
+    while len(all_companies) < max_records:
+        if after:
+            params["after"] = after
+        else:
+            params.pop("after", None)
+
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code != 200:
+            raise Exception(f"HubSpot API error: {response.text}")
+
+        data = response.json()
+        for company in data.get("results", []):
+            props = company.get("properties", {})
+            all_companies.append({
+                "name": props.get("name", ""),
+                "domain": props.get("domain", ""),
+                "hs_object_id": company.get("id", "")
+            })
+
+            if len(all_companies) >= max_records:
+                break
+
+        after = data.get("paging", {}).get("next", {}).get("after")
+        if not after:
+            break
+
+    return all_companies
+
+

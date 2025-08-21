@@ -4,11 +4,12 @@ import django
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 django.setup()
-import requests
+
 from decouple import config
 from integrations.sheets.service import update_sheet
+from hubspot_oauth.views import fetch_companies  # 👈 Reuse the logic
 
-
+import requests
 
 def get_access_token():
     token_url = "https://api.hubapi.com/oauth/v1/token"
@@ -23,27 +24,10 @@ def get_access_token():
     response.raise_for_status()
     return response.json().get("access_token")
 
-def fetch_companies(access_token):
-    url = "https://api.hubapi.com/crm/v3/objects/companies"
-    headers = {"Authorization": f"Bearer {access_token}"}
-
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    companies = response.json()
-
-    return [
-        {
-            "name": c["properties"].get("name", ""),
-            "domain": c["properties"].get("domain", ""),
-            "hs_object_id": c.get("id", "")
-        }
-        for c in companies.get("results", [])
-    ]
-
 def main():
     print("🔄 Starting HubSpot → Google Sheets sync...")
     access_token = get_access_token()
-    companies = fetch_companies(access_token)
+    companies = fetch_companies(access_token)  # 👈 Uses the shared logic
     update_sheet(companies)
     print(f"✅ Synced {len(companies)} companies to Google Sheets.")
 
