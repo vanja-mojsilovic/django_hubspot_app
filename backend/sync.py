@@ -3,6 +3,12 @@
 import requests
 from decouple import config
 from integrations.sheets.service import update_sheet
+import os
+import django
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+django.setup()
+
 
 def get_access_token():
     token_url = "https://api.hubapi.com/oauth/v1/token"
