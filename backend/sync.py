@@ -1,13 +1,13 @@
 # backend/sync.py
-
-import requests
-from decouple import config
-from integrations.sheets.service import update_sheet
 import os
 import django
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 django.setup()
+import requests
+from decouple import config
+from integrations.sheets.service import update_sheet
+
 
 
 def get_access_token():
