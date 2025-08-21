@@ -4,28 +4,40 @@ on:
   workflow_dispatch:  # Allows manual trigger from GitHub UI
 
 jobs:
-  run-script:
+  run-sync:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: 📦 Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: 🐍 Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: 📚 Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
 
-      - name: Decode Google credentials
+      - name: 🔐 Decode Google credentials
         run: |
           mkdir -p secrets
           echo "${{ secrets.GOOGLE_CREDENTIALS_B64 }}" | base64 --decode > secrets/credentials.json
 
-      - name: Run your script
+      - name: 🚀 Run HubSpot → Sheets sync
         run: |
-          python your_script.py
+          cd backend
+          python sync.py
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: secrets/credentials.json
+          DEBUG: ${{ secrets.DEBUG }}
+          GOOGLE_CREDENTIALS_B64: ${{ secrets.GOOGLE_CREDENTIALS_B64 }}
+          GOOGLE_CREDENTIALS_PATH: ${{ secrets.GOOGLE_CREDENTIALS_PATH }}
+          GOOGLE_SPREADSHEET_ID: ${{ secrets.GOOGLE_SPREADSHEET_ID }}
+          HUBSPOT_CLIENT_ID: ${{ secrets.HUBSPOT_CLIENT_ID }}
+          HUBSPOT_CLIENT_SECRET: ${{ secrets.HUBSPOT_CLIENT_SECRET }}
+          HUBSPOT_REDIRECT_URI: ${{ secrets.HUBSPOT_REDIRECT_URI }}
+          HUBSPOT_REFRESH_TOKEN: ${{ secrets.HUBSPOT_REFRESH_TOKEN }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
