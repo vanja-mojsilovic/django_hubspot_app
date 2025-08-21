@@ -1,0 +1,31 @@
+name: CI Pipeline
+
+on:
+  workflow_dispatch:  # Allows manual trigger from GitHub UI
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Decode Google credentials
+        run: |
+          mkdir -p secrets
+          echo "${{ secrets.GOOGLE_CREDENTIALS_B64 }}" | base64 --decode > secrets/credentials.json
+
+      - name: Run your script
+        run: |
+          python your_script.py
