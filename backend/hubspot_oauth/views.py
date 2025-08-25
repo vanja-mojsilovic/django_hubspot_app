@@ -165,4 +165,48 @@ def fetch_companies(access_token, max_records=1000, page_size=100):
 
     return all_companies
 
+def fetch_meetings(access_token, max_records=10, page_size=50):
+    engagements_url = "https://api.hubapi.com/engagements/v1/engagements/paged"
+    users_url = "https://api.hubapi.com/settings/v3/users"
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    # Step 1: Fetch users to map owner IDs to names
+    user_response = requests.get(users_url, headers=headers)
+    user_response.raise_for_status()
+    users = user_response.json().get("results", [])
+    user_map = {str(u["id"]): u["email"] for u in users}
+
+    # Step 2: Fetch meetings
+    all_meetings = []
+    offset = 0
+
+    while len(all_meetings) < max_records:
+        params = {"limit": page_size, "offset": offset}
+        response = requests.get(engagements_url, headers=headers, params=params)
+        response.raise_for_status()
+        data = response.json()
+
+        for item in data.get("results", []):
+            engagement = item.get("engagement", {})
+            if engagement.get("type") != "MEETING":
+                continue
+
+            owner_id = str(engagement.get("createdBy"))
+            meeting = {
+                "owner": user_map.get(owner_id, f"User {owner_id}"),
+                "timestamp": engagement.get("timestamp"),
+                "id": engagement.get("id")
+            }
+            all_meetings.append(meeting)
+
+            if len(all_meetings) >= max_records:
+                break
+
+        if not data.get("hasMore"):
+            break
+        offset = data.get("offset")
+
+    return all_meetings
+
+
 

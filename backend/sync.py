@@ -27,9 +27,21 @@ def get_access_token():
 def main():
     print("🔄 Starting HubSpot → Google Sheets sync...")
     access_token = get_access_token()
-    companies = fetch_companies(access_token)  # 👈 Uses the shared logic
-    update_sheet(companies)
-    print(f"✅ Synced {len(companies)} companies to Google Sheets.")
+
+    companies = fetch_companies(access_token)
+    print(f"✅ Fetched {len(companies)} companies.")
+
+    meetings = fetch_meetings(access_token, max_records=10)
+    print(f"✅ Fetched {len(meetings)} meetings.")
+
+    # Option 1: Combine both into one sheet
+    update_sheet(companies + meetings)
+
+    # Option 2: Push separately (if your sheet logic supports tabs or sections)
+    # update_sheet(companies, sheet_name="Companies")
+    # update_sheet(meetings, sheet_name="Meetings")
+
+    print("✅ Synced data to Google Sheets.")
 
 if __name__ == "__main__":
     main()
