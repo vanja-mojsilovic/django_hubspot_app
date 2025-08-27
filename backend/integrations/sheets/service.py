@@ -56,7 +56,8 @@ def update_sheet_meetings(data):
     values = [["Owner", "Timestamp", "Meeting ID"]]
     for item in data:
         values.append([
-            item.get("owner", ""),
+            item.get("owner_name", ""),
+            item.get("owner_email", ""),
             item.get("timestamp", ""),
             item.get("id", "")
         ])

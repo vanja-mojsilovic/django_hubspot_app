@@ -175,14 +175,17 @@ def fetch_meetings(access_token, max_records=10, page_size=50):
     users_url = "https://api.hubapi.com/settings/v3/users"
     headers = {"Authorization": f"Bearer {access_token}"}
 
-    # Step 1: Fetch users to map owner IDs to names
+    # Step 1: Fetch users to map owner IDs to names and emails
     user_response = requests.get(users_url, headers=headers)
     user_response.raise_for_status()
     users = user_response.json().get("results", [])
     user_map = {
-        str(u["id"]): f'{u.get("firstName", "")} {u.get("lastName", "")}'.strip() or u.get("email", f"User {u['id']}")
-        for u in users
+    str(u["id"]): {
+        "name": f'{u.get("firstName", "")} {u.get("lastName", "")}'.strip(),
+        "email": u.get("email", f'User {u["id"]}')
     }
+    for u in users
+}
 
 
     # Step 2: Fetch meetings
@@ -201,11 +204,13 @@ def fetch_meetings(access_token, max_records=10, page_size=50):
                 continue
 
             owner_id = str(engagement.get("createdBy"))
+            owner_info = user_map.get(owner_id, {"name": f"User {owner_id}", "email": ""})
             ts = engagement.get("timestamp")
             formatted_ts = datetime.datetime.fromtimestamp(ts / 1000).strftime("%Y-%m-%d %H:%M")
 
             meeting = {
-                "owner": user_map.get(owner_id, f"User {owner_id}"),
+                "owner_name": owner_info["name"],
+                "owner_email": owner_info["email"],
                 "timestamp": formatted_ts,
                 "id": engagement.get("id")
             }
@@ -214,12 +219,12 @@ def fetch_meetings(access_token, max_records=10, page_size=50):
             if len(all_meetings) >= max_records:
                 break
 
-
         if not data.get("hasMore"):
             break
         offset = data.get("offset")
 
     return all_meetings
+
 
 def get_meetings(request):
     access_token = request.GET.get("access_token")
