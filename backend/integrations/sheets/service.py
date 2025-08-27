@@ -53,7 +53,7 @@ def update_sheet_meetings(data):
         range=RANGE_NAME_MEETINGS
     ).execute()
 
-    values = [["Owner", "Timestamp", "Meeting ID"]]
+    values = [["Owner Name", "Owner Email", "Timestamp", "Meeting ID"]]
     for item in data:
         values.append([
             item.get("owner_name", ""),
