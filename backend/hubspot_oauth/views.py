@@ -4,7 +4,11 @@ from decouple import config
 from django.shortcuts import redirect
 from django.http import JsonResponse, HttpResponse
 from django.conf import settings
-from integrations.sheets.service import update_sheet_companies
+from integrations.sheets.service import update_sheet_companies,update_sheet_meetings
+import datetime
+
+
+
 
 def oauth_home(request):
     return HttpResponse("Welcome to the OAuth module.")
@@ -41,17 +45,18 @@ def hubspot_callback(request):
     token_data = response.json()
     access_token = token_data.get("access_token")
 
-    # Display token and link to fetch companies
     html = f"""
     <h2>OAuth Successful</h2>
-    <p>Access Token:</p>
+    <p><strong>Access Token:</strong></p>
     <pre>{access_token}</pre>
     <p><a href="/oauth/companies/?access_token={access_token}">View Companies</a></p>
+    <p><a href="/oauth/meetings/?access_token={access_token}">Sync Meetings</a></p>
     """
 
     print("Token response:", token_data)
 
     return HttpResponse(html)
+
 
 def get_contacts(request):
     return HttpResponse("Contacts endpoint.")  # Placeholder
@@ -196,9 +201,12 @@ def fetch_meetings(access_token, max_records=10, page_size=50):
                 continue
 
             owner_id = str(engagement.get("createdBy"))
+            ts = engagement.get("timestamp")
+            formatted_ts = datetime.datetime.fromtimestamp(ts / 1000).strftime("%Y-%m-%d %H:%M")
+
             meeting = {
                 "owner": user_map.get(owner_id, f"User {owner_id}"),
-                "timestamp": engagement.get("timestamp"),
+                "timestamp": formatted_ts,
                 "id": engagement.get("id")
             }
             all_meetings.append(meeting)
@@ -206,11 +214,23 @@ def fetch_meetings(access_token, max_records=10, page_size=50):
             if len(all_meetings) >= max_records:
                 break
 
+
         if not data.get("hasMore"):
             break
         offset = data.get("offset")
 
     return all_meetings
 
+def get_meetings(request):
+    access_token = request.GET.get("access_token")
+    if not access_token:
+        return JsonResponse({"error": "Missing access token"}, status=400)
 
+    try:
+        meetings = fetch_meetings(access_token)
+        update_sheet_meetings(meetings)
+    except Exception as e:
+        return JsonResponse({"error": f"Meeting sync failed: {str(e)}"}, status=500)
+
+    return JsonResponse(meetings, safe=False)
 
