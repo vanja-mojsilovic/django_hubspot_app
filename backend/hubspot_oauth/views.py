@@ -209,11 +209,13 @@ def fetch_meetings(access_token, max_records=10, page_size=50):
             formatted_ts = datetime.datetime.fromtimestamp(ts / 1000).strftime("%Y-%m-%d %H:%M")
 
             meeting = {
-                "owner_name": owner_info["name"],
-                "owner_email": owner_info["email"],
-                "timestamp": formatted_ts,
-                "id": engagement.get("id")
+                "created_by": engagement.get("createdBy"),
+                "owner_id": engagement.get("ownerId"),
+                "type": engagement.get("type"),
+                "body_preview": engagement.get("bodyPreview", ""),
+                "timestamp": datetime.datetime.fromtimestamp(engagement.get("timestamp") / 1000).strftime("%Y-%m-%d %H:%M")
             }
+
             all_meetings.append(meeting)
 
             if len(all_meetings) >= max_records:

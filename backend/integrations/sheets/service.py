@@ -53,14 +53,16 @@ def update_sheet_meetings(data):
         range=RANGE_NAME_MEETINGS
     ).execute()
 
-    values = [["Owner Name", "Owner Email", "Timestamp", "Meeting ID"]]
+    values = [["Created By (User ID)", "Owner ID", "Engagement Type", "Text Summary", "Timestamp"]]
     for item in data:
         values.append([
-            item.get("owner_name", ""),
-            item.get("owner_email", ""),
-            item.get("timestamp", ""),
-            item.get("id", "")
+            item.get("created_by", ""),
+            item.get("owner_id", ""),
+            item.get("type", ""),
+            item.get("body_preview", ""),
+            item.get("timestamp", "")
         ])
+
 
     body = {"values": values}
     sheet.values().update(
