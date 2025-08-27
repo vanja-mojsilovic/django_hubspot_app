@@ -233,7 +233,7 @@ def get_meetings(request):
         return JsonResponse({"error": "Missing access token"}, status=400)
 
     try:
-        meetings = fetch_meetings(access_token)
+        meetings = fetch_meetings(access_token, max_records=10000)
         update_sheet_meetings(meetings)
     except Exception as e:
         return JsonResponse({"error": f"Meeting sync failed: {str(e)}"}, status=500)
