@@ -170,7 +170,7 @@ def fetch_companies(access_token, max_records=1000, page_size=100):
 
     return all_companies
 
-def fetch_meetings(access_token, max_records=10, page_size=50):
+def fetch_meetings(access_token, max_records=10000, page_size=100):
     engagements_url = "https://api.hubapi.com/engagements/v1/engagements/paged"
     users_url = "https://api.hubapi.com/settings/v3/users"
     headers = {"Authorization": f"Bearer {access_token}"}
@@ -180,15 +180,14 @@ def fetch_meetings(access_token, max_records=10, page_size=50):
     user_response.raise_for_status()
     users = user_response.json().get("results", [])
     user_map = {
-    str(u["id"]): {
-        "name": f'{u.get("firstName", "")} {u.get("lastName", "")}'.strip(),
-        "email": u.get("email", f'User {u["id"]}')
+        str(u["id"]): {
+            "name": f'{u.get("firstName", "")} {u.get("lastName", "")}'.strip() or u.get("email", f'User {u["id"]}'),
+            "email": u.get("email", f'User {u["id"]}')
+        }
+        for u in users
     }
-    for u in users
-}
 
-
-    # Step 2: Fetch meetings
+    # Step 2: Fetch meetings with pagination
     all_meetings = []
     offset = 0
 
@@ -213,9 +212,8 @@ def fetch_meetings(access_token, max_records=10, page_size=50):
                 "owner_id": engagement.get("ownerId"),
                 "type": engagement.get("type"),
                 "body_preview": engagement.get("bodyPreview", ""),
-                "timestamp": datetime.datetime.fromtimestamp(engagement.get("timestamp") / 1000).strftime("%Y-%m-%d %H:%M")
+                "timestamp": formatted_ts
             }
-
             all_meetings.append(meeting)
 
             if len(all_meetings) >= max_records:
@@ -226,6 +224,7 @@ def fetch_meetings(access_token, max_records=10, page_size=50):
         offset = data.get("offset")
 
     return all_meetings
+
 
 
 def get_meetings(request):
