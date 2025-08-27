@@ -6,9 +6,8 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 django.setup()
 
 from decouple import config
-from integrations.sheets.service import update_sheet
-from hubspot_oauth.views import fetch_companies  # 👈 Reuse the logic
-
+from integrations.sheets.service import update_sheet_companies,update_sheet_meetings
+from hubspot_oauth.views import fetch_companies, fetch_meetings 
 import requests
 
 def get_access_token():
@@ -35,11 +34,11 @@ def main():
     print(f"✅ Fetched {len(meetings)} meetings.")
 
     # Option 1: Combine both into one sheet
-    update_sheet(companies + meetings)
+    update_sheet_companies(companies)
+    update_sheet_meetings(meetings)
 
-    # Option 2: Push separately (if your sheet logic supports tabs or sections)
-    # update_sheet(companies, sheet_name="Companies")
-    # update_sheet(meetings, sheet_name="Meetings")
+    # I want to Push separately 
+    
 
     print("✅ Synced data to Google Sheets.")
 

@@ -4,7 +4,7 @@ from decouple import config
 from django.shortcuts import redirect
 from django.http import JsonResponse, HttpResponse
 from django.conf import settings
-from integrations.sheets.service import update_sheet
+from integrations.sheets.service import update_sheet_companies
 
 def oauth_home(request):
     return HttpResponse("Welcome to the OAuth module.")
@@ -98,7 +98,7 @@ def get_companies(request):
             break  # No more pages
 
     try:
-        update_sheet(all_companies)
+        update_sheet_companies(all_companies)
     except Exception as e:
         return JsonResponse({"error": f"Sheet update failed: {str(e)}"}, status=500)
 
