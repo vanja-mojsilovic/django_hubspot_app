@@ -174,7 +174,11 @@ def fetch_meetings(access_token, max_records=10, page_size=50):
     user_response = requests.get(users_url, headers=headers)
     user_response.raise_for_status()
     users = user_response.json().get("results", [])
-    user_map = {str(u["id"]): u["email"] for u in users}
+    user_map = {
+        str(u["id"]): f'{u.get("firstName", "")} {u.get("lastName", "")}'.strip() or u.get("email", f"User {u['id']}")
+        for u in users
+    }
+
 
     # Step 2: Fetch meetings
     all_meetings = []
